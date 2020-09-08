@@ -1,0 +1,7 @@
+{
+    "programmer": "AVRISP mkII",
+    "board": "arduino:avr:nano",
+    "configuration": "cpu=atmega328old",
+    "port": "/dev/ttyUSB0",
+    "sketch": "CONTROLE_REMOTO_HBZ_2.0.ino"
+}
