@@ -1,10 +1,21 @@
 #include <EEPROM.h>
 #include <ThreeWire.h>
 #include <RtcDS1302.h>
+#include <SoftwareSerial.h>
 
 ThreeWire myWire(4, 5, 2);
 RtcDS1302<ThreeWire> Rtc(myWire);
+SoftwareSerial HC12(10, 11);
 
+const int ordemServico = 2;
+
+const int relayMotor =  14; // relay motor
+const int relayValAlivio =  15; // relay val. alivio
+const int relayValElevacao =  16; // relay val. elevação
+const int relayValNivelamento =  17; // relay val. nivelamento
+const int ledR = 7;
+const int ledG = 8;
+const int ledB = 6;
 int posicaoPeriodoSerial = 0;
 int posicaoAnoSerial = 4;
 int periodo = 6;
@@ -12,16 +23,27 @@ byte mesInicial;
 byte anoInicial;
 int dataLimite;
 
-// Este codigo limpa os dados da memoria interna do arduino
-void erase(void) {
-  for (int i = 0 ; i < EEPROM.length() ; i++) {
-    EEPROM.write(i, 0);
-  }
+void setColor(int redValue, int greenValue, int blueValue) {
+  analogWrite(ledR, redValue);
+  analogWrite(ledG, greenValue);
+  analogWrite(ledB, blueValue);
 }
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+  HC12.begin(9600);
+
+  pinMode(relayMotor, OUTPUT);
+  pinMode(relayValAlivio, OUTPUT);
+  pinMode(relayValElevacao, OUTPUT);
+  pinMode(relayValNivelamento, OUTPUT);
+
+  pinMode(ledR, OUTPUT);
+  pinMode(ledG, OUTPUT);
+  pinMode(ledB, OUTPUT);
+
+  resetAllRelays();
 
   Serial.print("compiled: ");
   Serial.print(__DATE__);
@@ -140,12 +162,66 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  char input;
+
+  if (HC12.available() > 0) {
+    input = HC12.read();
+
+    Serial.println("Comando recebido: =====> ");
+    Serial.println(input);
+    Serial.println(2 * ordemServico);
+    Serial.println();
+    Serial.println();
+
+    int command1 = getCommand(2);
+    int command2 = getCommand(3);
+    int command3 = getCommand(4);
+    int command4 = getCommand(5);
+
+    if (input == command1) {
+      Serial.println("Acionou o comando 4");
+      digitalWrite(relayMotor, LOW);
+      digitalWrite(relayValElevacao, LOW);
+      setColor(255, 0, 0);
+
+    } else if (input == command2) {
+      digitalWrite(relayValAlivio, LOW);
+      digitalWrite(relayValElevacao, LOW);
+      setColor(0, 255, 0);
+
+    } else if (input == command3) {
+      digitalWrite(relayMotor, LOW);
+      digitalWrite(relayValNivelamento, LOW);
+      setColor(106, 27, 154);
+
+    } else if (input == command4) {
+      digitalWrite(relayValAlivio, LOW);
+      digitalWrite(relayValNivelamento, LOW);
+      setColor(186, 104, 200);
+    }
+
+    delay(100);
+  } else {
+    resetAllRelays();
+    setColor(255, 235, 59);
+  }
 }
+
+void resetAllRelays() {
+  digitalWrite(relayMotor, HIGH);
+  digitalWrite(relayValElevacao, HIGH);
+  digitalWrite(relayValAlivio, HIGH);
+  digitalWrite(relayValNivelamento, HIGH);
+}
+
+int getCommand(int action) {
+  return action * ordemServico;
+}
+
 
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
-void printDateTime(const RtcDateTime& dt) {
+void printDateTime(const RtcDateTime & dt) {
   char datestring[20];
 
   snprintf_P(datestring,
