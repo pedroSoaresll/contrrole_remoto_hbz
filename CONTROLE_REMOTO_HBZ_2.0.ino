@@ -9,10 +9,10 @@ SoftwareSerial HC12(10, 11);
 
 const int ordemServico = 2;
 
-const int relayMotor =  14; // relay motor
-const int relayValAlivio =  15; // relay val. alivio
-const int relayValElevacao =  16; // relay val. elevação
-const int relayValNivelamento =  17; // relay val. nivelamento
+const int relayMotor = 14;          // relay motor
+const int relayValAlivio = 15;      // relay val. alivio
+const int relayValElevacao = 16;    // relay val. elevação
+const int relayValNivelamento = 17; // relay val. nivelamento
 const int ledR = 7;
 const int ledG = 8;
 const int ledB = 6;
@@ -23,13 +23,15 @@ byte mesInicial;
 byte anoInicial;
 int dataLimite;
 
-void setColor(int redValue, int greenValue, int blueValue) {
+void setColor(int redValue, int greenValue, int blueValue)
+{
   analogWrite(ledR, redValue);
   analogWrite(ledG, greenValue);
   analogWrite(ledB, blueValue);
 }
 
-void setup() {
+void setup()
+{
   // put your setup code here, to run once:
   Serial.begin(9600);
   HC12.begin(9600);
@@ -55,7 +57,8 @@ void setup() {
   printDateTime(compiled);
   Serial.println();
 
-  if (!Rtc.IsDateTimeValid()) {
+  if (!Rtc.IsDateTimeValid())
+  {
     // Common Causes:
     //    1) first time you ran and the device wasn't running yet
     //    2) the battery on the device is low or even missing
@@ -64,7 +67,8 @@ void setup() {
     Rtc.SetDateTime(compiled);
   }
 
-  if (!Rtc.IsDateTimeValid()) {
+  if (!Rtc.IsDateTimeValid())
+  {
     // Common Causes:
     //    1) first time you ran and the device wasn't running yet
     //    2) the battery on the device is low or even missing
@@ -73,26 +77,31 @@ void setup() {
     Rtc.SetDateTime(compiled);
   }
 
-  if (Rtc.GetIsWriteProtected()) {
+  if (Rtc.GetIsWriteProtected())
+  {
     Serial.println("RTC was write protected, enabling writing now");
     Rtc.SetIsWriteProtected(false);
   }
 
-  if (!Rtc.GetIsRunning()) {
+  if (!Rtc.GetIsRunning())
+  {
     Serial.println("RTC was not actively running, starting now");
     Rtc.SetIsRunning(true);
   }
 
   RtcDateTime now = Rtc.GetDateTime();
 
-  if (now < compiled) {
+  if (now < compiled)
+  {
     Serial.println("RTC is older than compile time!  (Updating DateTime)");
     Rtc.SetDateTime(compiled);
   }
-  else if (now > compiled) {
+  else if (now > compiled)
+  {
     Serial.println("RTC is newer than compile time. (this is expected)");
   }
-  else if (now == compiled) {
+  else if (now == compiled)
+  {
     Serial.println("RTC is the same as compile time! (not expected but all is fine)");
   }
 
@@ -105,7 +114,8 @@ void setup() {
   byte mesAtual = compiled.Month();
 
   // caso nao existir data limite na memoria, insere.
-  if (!mesInicial) {
+  if (!mesInicial)
+  {
     Serial.println("Inicializa mes atual...");
 
     EEPROM.write(posicaoPeriodoSerial, mesAtual);
@@ -121,7 +131,8 @@ void setup() {
   int anoAtual = compiled.Year() - 2000;
   anoInicial = EEPROM.read(posicaoAnoSerial);
 
-  if (!anoInicial) {
+  if (!anoInicial)
+  {
     Serial.println("Inicializa ano atual...");
 
     EEPROM.write(posicaoAnoSerial, anoAtual);
@@ -135,10 +146,12 @@ void setup() {
   dataLimite = mesInicial;
 
   // acrescenta o periodo aqui
-  for (int i = 1; i < periodo + 1; i++) {
+  for (int i = 1; i < periodo + 1; i++)
+  {
     dataLimite += 1;
 
-    if (dataLimite > 12) {
+    if (dataLimite > 12)
+    {
       dataLimite = 1;
       anoInicial += 1;
     }
@@ -149,28 +162,33 @@ void setup() {
   Serial.print("mostra ano limite: ");
   Serial.println(anoInicial);
 
-
-  if (anoInicial <= anoAtual) {
-    if (dataLimite <= mesAtual) {
+  if (anoInicial <= anoAtual)
+  {
+    if (dataLimite <= mesAtual)
+    {
       Serial.println("tem que acender o led do alerta");
-    } else {
+    }
+    else
+    {
       Serial.println("o mes eh menor que o periodo de 6 meses");
     }
-  } else {
+  }
+  else
+  {
     Serial.println("o ano eh menor que o periodo de 6 meses");
   }
 }
 
-void loop() {
+void loop()
+{
   char input;
 
-  if (HC12.available() > 0) {
+  if (HC12.available() > 0)
+  {
     input = HC12.read();
 
-    Serial.println("Comando recebido: =====> ");
+    Serial.print("Comando recebido: =====> ");
     Serial.println(input);
-    Serial.println(2 * ordemServico);
-    Serial.println();
     Serial.println();
 
     int command1 = getCommand(2);
@@ -178,50 +196,57 @@ void loop() {
     int command3 = getCommand(4);
     int command4 = getCommand(5);
 
-    if (input == command1) {
-      Serial.println("Acionou o comando 4");
+    if (input == command1)
+    {
       digitalWrite(relayMotor, LOW);
       digitalWrite(relayValElevacao, LOW);
       setColor(255, 0, 0);
-
-    } else if (input == command2) {
+    }
+    else if (input == command2)
+    {
       digitalWrite(relayValAlivio, LOW);
       digitalWrite(relayValElevacao, LOW);
       setColor(0, 255, 0);
-
-    } else if (input == command3) {
+    }
+    else if (input == command3)
+    {
       digitalWrite(relayMotor, LOW);
       digitalWrite(relayValNivelamento, LOW);
       setColor(106, 27, 154);
-
-    } else if (input == command4) {
+    }
+    else if (input == command4)
+    {
       digitalWrite(relayValAlivio, LOW);
       digitalWrite(relayValNivelamento, LOW);
       setColor(186, 104, 200);
     }
 
     delay(100);
-  } else {
+  }
+  else
+  {
     resetAllRelays();
     setColor(255, 235, 59);
   }
 }
 
-void resetAllRelays() {
+void resetAllRelays()
+{
   digitalWrite(relayMotor, HIGH);
   digitalWrite(relayValElevacao, HIGH);
   digitalWrite(relayValAlivio, HIGH);
   digitalWrite(relayValNivelamento, HIGH);
 }
 
-int getCommand(int action) {
+int getCommand(int action)
+{
   return action * ordemServico;
 }
 
-
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
-void printDateTime(const RtcDateTime & dt) {
+void printDateTime(const RtcDateTime &dt)
+{
   char datestring[20];
 
   snprintf_P(datestring,
@@ -232,6 +257,6 @@ void printDateTime(const RtcDateTime & dt) {
              dt.Year(),
              dt.Hour(),
              dt.Minute(),
-             dt.Second() );
+             dt.Second());
   Serial.print(datestring);
 }
